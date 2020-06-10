@@ -17,7 +17,7 @@ from __future__ import unicode_literals
 import os
 import sys
 from argparse import ArgumentParser
-import urllib
+import urllib.parse
 import requests
 
 from flask import Flask, request, abort
@@ -26,10 +26,13 @@ from linebot import (
     LineBotApi, WebhookHandler
 )
 from linebot.exceptions import (
-    InvalidSignatureError
+    InvalidSignatureError, LineBotApiError
 )
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
+    CarouselColumn, CarouselTemplate, FollowEvent,
+    LocationMessage, TemplateSendMessage, UnfollowEvent,
+    URITemplateAction
 )
 
 app = Flask(__name__)
