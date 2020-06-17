@@ -15,8 +15,8 @@ def create_table():
     #    cur.executescript(f.read().decode('utf8'))
     cur.execute("DROP TABLE IF EXISTS user")
     cur.execute("DROP TABLE IF EXISTS post")
-    cur.execute("CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL")
-    cur.execute("CREATE TABLE post(id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER NOT NULL, latitude INTEGER, longitude INTEGER, freeword TEXT, FOREIGN KEY(userid) REFERENCES user(id)")
+    cur.execute("CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT")
+    cur.execute("CREATE TABLE post(id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, latitude INTEGER, longitude INTEGER, freeword TEXT, FOREIGN KEY(userid) REFERENCES user(id)")
 
 def insert_location(userid, longitude, latitude):
     cur.execute("INSERT INTO post (userid, latitude, longitude) VALUES (?, ?, ?)", (userid, latitude, longitude))
