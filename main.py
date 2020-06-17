@@ -94,13 +94,13 @@ def call_restsearch(latitude, longitude, freeword=None):
 def handle_location_message(event):
     user_lat = event.message.latitude
     user_longit = event.message.longitude
-    userid = fetch_userid(event.source.userId)
+    userid = fetch_userid(event.source.user_id)
     if userid:
         freeword = fetch_freeword(userid)
         do_reply(freeword=freeword, latitude=user_lat, longitude=user_longit, event=event)
     else:
-        insert_username(event.source.userId)
-        userid = fetch_userid(event.source.userId)
+        insert_username(event.source.user_id)
+        userid = fetch_userid(event.source.user_id)
         insert_location(userid, latitude=user_lat, longitude=user_longit)
 
 
@@ -135,13 +135,13 @@ def handle_unfollow():
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     freeword = event.message.text
-    userid = fetch_userid(event.source.userId)
+    userid = fetch_userid(event.source.user_id)
     if userid:
         location = fetch_location(userid)
         do_reply(freeword=freeword, latitude=location[0], longitude=location[1], event=event)
     else:
-        insert_username(event.source.userId)
-        userid = fetch_userid(event.source.userId)
+        insert_username(event.source.user_id)
+        userid = fetch_userid(event.source.user_id)
         insert_freeword(userid, freeword)
 
 #    line_bot_api.reply_message(
