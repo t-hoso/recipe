@@ -4,7 +4,6 @@ from flask import current_app
 
 DATABASE = os.environ["DATABASE"]
 
-
 db = apsw.Connection(
     DATABASE,
 )
@@ -15,28 +14,32 @@ def create_table():
     #    cur.executescript(f.read().decode('utf8'))
     cur.execute("DROP TABLE IF EXISTS user")
     cur.execute("DROP TABLE IF EXISTS post")
-    cur.execute("CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT")
-    cur.execute("CREATE TABLE post(id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, latitude INTEGER, longitude INTEGER, freeword TEXT, FOREIGN KEY(userid) REFERENCES user(id)")
+    cur.execute("CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT)")
+    cur.execute("CREATE TABLE post(id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, latitude INTEGER, longitude INTEGER, freeword TEXT, FOREIGN KEY(userid) REFERENCES user(id))")
 
 def insert_location(userid, longitude, latitude):
     cur.execute("INSERT INTO post (userid, latitude, longitude) VALUES (?, ?, ?)", (userid, latitude, longitude))
 
 def fetch_location(userid):
-    location = cur.execute("SELECT latitude, longitude FROM post WHERE username=?", (userid)).fetchone()
+    location = cur.execute("SELECT latitude, longitude FROM post WHERE username=?", (userid,)).fetchone()
     return location
 
 def insert_freeword(userid, freeword):
-    cur.execute("INSERT INTO post (userid, freeword) VALUES (?, ?), (userid, freeword)")
+    cur.execute("INSERT INTO post (userid, freeword) VALUES (?, ?)", (userid, freeword))
 
 def fetch_freeword(userid):
-    word = cur.execute("SELECT freeword FROM post WHERE username=?", (userid)).fetchone()
+    word = cur.execute("SELECT freeword FROM post WHERE username=?", (userid,)).fetchone()
     return word
 
 def fetch_userid(username):
-    username = cur.execute("SELECT id FROM user WHERE username=?", (username)).fetchone()
+    username = cur.execute("SELECT id FROM user WHERE username=?", (username,)).fetchone()
+    return username
 
 def insert_username(username):
-    cur.execute("INSERT INTO user (username) VALUES (?)", (username))
+    cur.execute("INSERT INTO user (username) VALUES (?)", (username,))
 
 if __name__ == '__main__':
     create_table()
+    username = '12'
+    insert_username(username)
+    print(fetch_userid(username))
