@@ -1,13 +1,12 @@
 import os
-import sqlite3
+import apsw
 from flask import current_app
 
 DATABASE = os.environ["DATABASE"]
 
 
-db = sqlite3.connect(
+db = apsw.Connection(
     DATABASE,
-    detect_types=sqlite3.PARSE_DECLTYPES
 )
 cur = db.cursor()
 
@@ -34,3 +33,7 @@ def fetch_userid(username):
 
 def insert_username(username):
     db.execute("INSERT INTO user (username) VALUES (?)", (username))
+
+if __name__ == '__main__':
+    create_table()
+    
