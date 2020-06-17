@@ -35,6 +35,11 @@ from linebot.models import (
     URITemplateAction
 )
 
+from db import (
+    create_table, insert_freeword, insert_location, insert_username, fetch_userid,
+    fetch_freeword, fetch_location
+)
+
 app = Flask(__name__)
 
 #環境変数取得
@@ -66,7 +71,7 @@ def call_restsearch(latitude, longitude, freeword=None):
         "keyid": GNAVI_API_KEY,
         "latitude": latitude,
         "longitude": longitude,
-        #"freeword": freeword,
+        "freeword": freeword,
         # "range": search_range
     }
     params = urllib.parse.urlencode(query, safe=",")
@@ -89,8 +94,62 @@ def call_restsearch(latitude, longitude, freeword=None):
 def handle_location_message(event):
     user_lat = event.message.latitude
     user_longit = event.message.longitude
+    userid = fetch_userid(event.get("source").get("userId"))
+    if userid:
+        freeword = fetch_freeword(userid)
+        do_reply(freeword=freeword, latitude=user_lat, longitude=user_longit, event=event)
+    else:
+        insert_username(event.get("source").get("userId"))
+        userid = fetch_userid(event.get("source").get("userId"))
+        insert_location(userid, latitude=user_lat, longitude=user_longit)
 
-    result = call_restsearch(user_lat, user_longit)
+
+@app.route("/callback", methods=['POST'])
+def callback():
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+
+    return 'OK'
+
+@handler.add(FollowEvent)
+def handle_follow(event):
+    line_bot_api.reply_message(
+        event.reply_token, TextSendMessage(text=FOLLOWED_RESPONSE)
+    )
+
+
+@handler.add(UnfollowEvent)
+def handle_unfollow():
+    app.logger.info("Got Unfollow event")
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    freeword = event.message.text
+    userid = fetch_userid(event.get("source").get("userId"))
+    if userid:
+        location = fetch_location(userid)
+        do_reply(freeword=freeword, latitude=location[0], longitude=location[1], event=event)
+    else:
+        insert_username(event.get("source").get("userId"))
+        userid = fetch_userid(event.get("source").get("userId"))
+        insert_freeword(userid, freeword)
+
+#    line_bot_api.reply_message(
+#        event.reply_token,
+#        TextSendMessage(text=event.message.text))
+
+def do_reply(freeword, longitude, latitude, event):
+    result = call_restsearch(user_lat, user_longit, freeword=freeword)
     print("result is: {}".format(result))
 
     response_json_list = []
@@ -143,7 +202,7 @@ def handle_location_message(event):
     ]
 
     messages = TemplateSendMessage(
-        alt_text="お店情報でした！",
+        alt_text="お店情報をお届けします！",
         template=CarouselTemplate(columns=columns),
     )
     print("messages is: {}".format(messages))
@@ -153,41 +212,7 @@ def handle_location_message(event):
         messages=messages
     )
 
-@app.route("/callback", methods=['POST'])
-def callback():
-    # get X-Line-Signature header value
-    signature = request.headers['X-Line-Signature']
-
-    # get request body as text
-    body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
-
-    # handle webhook body
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        abort(400)
-
-    return 'OK'
-
-@handler.add(FollowEvent)
-def handle_follow(event):
-    line_bot_api.reply_message(
-        event.reply_token, TextSendMessage(text=FOLLOWED_RESPONSE)
-    )
-
-
-@handler.add(UnfollowEvent)
-def handle_unfollow():
-    app.logger.info("Got Unfollow event")
-
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=event.message.text))
 
 if __name__ == "__main__":
-#    app.run()
     port = int(os.getenv("PORT"))
     app.run(host="0.0.0.0", port=port)
