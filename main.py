@@ -214,4 +214,5 @@ def do_reply(freeword, longitude, latitude, event):
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT"))
+    create_table()
     app.run(host="0.0.0.0", port=port)
